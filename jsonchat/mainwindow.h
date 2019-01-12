@@ -23,6 +23,10 @@ private slots:
 
     void on_AddressEdit_textChanged(const QString &arg1);
 
+    void on_RoomName_textEdited(const QString &arg1);
+
+    void on_UserName_textEdited(const QString &arg1);
+
     void on_TalkEdit_textEdited(const QString &arg1);
 
     void on_TalkEdit_returnPressed();
@@ -31,8 +35,10 @@ private slots:
 
 private:
     Ui::MainWindow *ui;
-    QString mAddress;
     QTcpSocket mSocket;
+    QString mAddress;
+    QString mRoomName;
+    QString mUserName;
     QString mUserText;
     QString mRecvText;
 };

@@ -11,6 +11,12 @@ MainWindow::MainWindow(QWidget *parent) :
 {
     ui->setupUi(this);
     connect(&mSocket, SIGNAL(readyRead()), this, SLOT(readyPeer()));
+
+    mRoomName = "123";
+    ui->RoomName->setText(mRoomName);
+
+    mUserName = "익명";
+    ui->UserName->setText(mUserName);
 }
 
 MainWindow::~MainWindow()
@@ -28,8 +34,17 @@ void MainWindow::OnMessage(const char* text)
         {
             BeginPos += 11;
             auto NewJson = QJsonDocument::fromJson(mRecvText.mid(BeginPos, EndPos - BeginPos).toUtf8());
-            auto NewString = NewJson["text"].toString();
-            ui->TalkList->addItem(NewString);
+            auto NewName = NewJson["name"].toString("???");
+            auto NewText = NewJson["text"].toString("...");
+
+            if(NewText.indexOf("[in-love]") != -1)
+            {
+                QIcon NewIcon("../image/in-love.png");
+                QListWidgetItem* NewItem = new QListWidgetItem(NewIcon,
+                    "[" + NewName + "] " + NewText.remove("[in-love]"));
+                ui->TalkList->addItem(NewItem);
+            }
+            else ui->TalkList->addItem("[" + NewName + "] " + NewText);
         }
         mRecvText.remove(0, EndPos + 9);
     }
@@ -40,6 +55,9 @@ void MainWindow::on_ConnectBtn_clicked()
     mSocket.connectToHost(mAddress, 10125);
     if(mSocket.waitForConnected(5000))
     {
+        ui->AddressEdit->setEnabled(false);
+        ui->RoomName->setEnabled(false);
+        ui->UserName->setEnabled(false);
         ui->TalkList->setEnabled(true);
         ui->TalkEdit->setEnabled(true);
     }
@@ -48,6 +66,16 @@ void MainWindow::on_ConnectBtn_clicked()
 void MainWindow::on_AddressEdit_textChanged(const QString &arg1)
 {
     mAddress = arg1;
+}
+
+void MainWindow::on_RoomName_textEdited(const QString &arg1)
+{
+    mRoomName = arg1;
+}
+
+void MainWindow::on_UserName_textEdited(const QString &arg1)
+{
+    mUserName = arg1;
 }
 
 void MainWindow::on_TalkEdit_textEdited(const QString &arg1)
@@ -59,7 +87,8 @@ void MainWindow::on_TalkEdit_returnPressed()
 {
     QString Msg = "#json begin {";
     Msg += "'type':'chat',";
-    Msg += "'room':'#1',";
+    Msg += "'room':'" + mRoomName + "',";
+    Msg += "'name':'" + mUserName + "',";
     Msg += "'text':'" + mUserText + "'";
     Msg += "} #json end";
     mSocket.write(Msg.toUtf8().constData());

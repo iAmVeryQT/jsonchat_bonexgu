@@ -46,9 +46,9 @@
     </property>
     <property name="geometry">
      <rect>
-      <x>10</x>
+      <x>110</x>
       <y>230</y>
-      <width>381</width>
+      <width>281</width>
       <height>21</height>
      </rect>
     </property>
@@ -58,9 +58,35 @@
      <rect>
       <x>10</x>
       <y>10</y>
-      <width>301</width>
+      <width>201</width>
       <height>21</height>
      </rect>
+    </property>
+   </widget>
+   <widget class="QLineEdit" name="UserName">
+    <property name="geometry">
+     <rect>
+      <x>10</x>
+      <y>230</y>
+      <width>91</width>
+      <height>21</height>
+     </rect>
+    </property>
+    <property name="alignment">
+     <set>Qt::AlignCenter</set>
+    </property>
+   </widget>
+   <widget class="QLineEdit" name="RoomName">
+    <property name="geometry">
+     <rect>
+      <x>220</x>
+      <y>10</y>
+      <width>91</width>
+      <height>20</height>
+     </rect>
+    </property>
+    <property name="alignment">
+     <set>Qt::AlignCenter</set>
     </property>
    </widget>
   </widget>
