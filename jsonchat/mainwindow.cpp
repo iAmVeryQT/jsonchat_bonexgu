@@ -59,7 +59,7 @@ void MainWindow::on_TalkEdit_returnPressed()
 {
     QString Msg = "#json begin {";
     Msg += "'type':'chat',";
-    Msg += "'room':'r123',";
+    Msg += "'room':'#1',";
     Msg += "'text':'" + mUserText + "'";
     Msg += "} #json end";
     mSocket.write(Msg.toUtf8().constData());
