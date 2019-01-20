@@ -33,6 +33,10 @@ private slots:
 
     void readyPeer();
 
+    void on_FileBtn_pressed();
+
+    void on_DownloadBtn_pressed();
+
 private:
     Ui::MainWindow *ui;
     QTcpSocket mSocket;

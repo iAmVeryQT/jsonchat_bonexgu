@@ -2,8 +2,19 @@
 #include "ui_mainwindow.h"
 
 #include <QJsonDocument>
+#include <QFileDialog>
+#include <QLabel>
+#include <QHBoxLayout>
+#include <QObjectUserData>
 #include <QMessageBox>
 //QMessageBox(QMessageBox::Information, "Debug", Text).exec();
+
+class MyData : public QObjectUserData
+{
+public:
+    QString mSender;
+    QString mFilePath;
+};
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
@@ -11,6 +22,9 @@ MainWindow::MainWindow(QWidget *parent) :
 {
     ui->setupUi(this);
     connect(&mSocket, SIGNAL(readyRead()), this, SLOT(readyPeer()));
+
+    mAddress = "boss2d.com";
+    ui->AddressEdit->setText(mAddress);
 
     mRoomName = "123";
     ui->RoomName->setText(mRoomName);
@@ -34,17 +48,55 @@ void MainWindow::OnMessage(const char* text)
         {
             BeginPos += 11;
             auto NewJson = QJsonDocument::fromJson(mRecvText.mid(BeginPos, EndPos - BeginPos).toUtf8());
+            auto NewSubType = NewJson["subtype"].toString();
             auto NewName = NewJson["name"].toString("???");
             auto NewText = NewJson["text"].toString("...");
 
-            if(NewText.indexOf("[in-love]") != -1)
+            if(NewSubType.indexOf("fileshare") != -1)
             {
-                QIcon NewIcon("../image/in-love.png");
-                QListWidgetItem* NewItem = new QListWidgetItem(NewIcon,
-                    "[" + NewName + "] " + NewText.remove("[in-love]"));
+                // 데이터
+                auto NewFilePath = NewJson["filepath"].toString();
+                MyData* NewData = new MyData();
+                NewData->mSender = NewName;
+                NewData->mFilePath = NewFilePath;
+
+                // 버튼
+                QPushButton* NewButton = new QPushButton("파일받기");
+                NewButton->setUserData(0, NewData);
+                connect(NewButton, SIGNAL(pressed()), this, SLOT(on_DownloadBtn_pressed()));
+
+                // 위젯
+                QHBoxLayout* NewLayout = new QHBoxLayout();
+                NewLayout->addWidget(NewButton);
+                NewLayout->addWidget(new QLabel(NewText));
+                QWidget* NewWidget = new QWidget();
+                NewWidget->setLayout(NewLayout);
+
+                // 아이템
+                QListWidgetItem* NewItem = new QListWidgetItem();
+                NewItem->setBackgroundColor(QColor(192, 224, 255));
+                NewItem->setSizeHint(QSize(0, 40));
+                ui->TalkList->addItem(NewItem);
+
+                ui->TalkList->setItemWidget(NewItem, NewWidget);
+            }
+            else if(NewSubType.indexOf("getfile") != -1)
+            {
+                QListWidgetItem* NewItem = new QListWidgetItem("<" + NewName + "> " + NewText);
+                NewItem->setBackgroundColor(QColor(255, 224, 192));
                 ui->TalkList->addItem(NewItem);
             }
-            else ui->TalkList->addItem("[" + NewName + "] " + NewText);
+            else
+            {
+                if(NewText.indexOf("[in-love]") != -1)
+                {
+                    QIcon NewIcon("../image/in-love.png");
+                    QListWidgetItem* NewItem = new QListWidgetItem(NewIcon,
+                        "[" + NewName + "] " + NewText.remove("[in-love]"));
+                    ui->TalkList->addItem(NewItem);
+                }
+                else ui->TalkList->addItem("[" + NewName + "] " + NewText);
+            }
         }
         mRecvText.remove(0, EndPos + 9);
     }
@@ -60,6 +112,7 @@ void MainWindow::on_ConnectBtn_clicked()
         ui->UserName->setEnabled(false);
         ui->TalkList->setEnabled(true);
         ui->TalkEdit->setEnabled(true);
+        ui->FileBtn->setEnabled(true);
     }
 }
 
@@ -97,15 +150,62 @@ void MainWindow::on_TalkEdit_returnPressed()
 
 void MainWindow::readyPeer()
 {
-    QTcpSocket* Peer = (QTcpSocket*) sender();
-    qint64 PacketSize = Peer->bytesAvailable();
-
-    if(0 < PacketSize)
+    if(auto Peer = qobject_cast<QTcpSocket*>(sender()))
     {
-        char* PacketBuffer = new char[PacketSize + 1];
-        Peer->read(PacketBuffer, PacketSize);
-        PacketBuffer[PacketSize] = '\0';
-        OnMessage(PacketBuffer);
-        delete[] PacketBuffer;
+        qint64 PacketSize = Peer->bytesAvailable();
+        if(0 < PacketSize)
+        {
+            char* PacketBuffer = new char[PacketSize + 1];
+            Peer->read(PacketBuffer, PacketSize);
+            PacketBuffer[PacketSize] = '\0';
+            OnMessage(PacketBuffer);
+            delete[] PacketBuffer;
+        }
+    }
+}
+
+void MainWindow::on_FileBtn_pressed()
+{
+    QFileDialog Dialog(nullptr, "전송할 파일을 선택하세요");
+    if(Dialog.exec())
+    {
+        const QString FilePath = Dialog.selectedFiles()[0];
+        const int SlashPos = FilePath.lastIndexOf("/");
+        const QString ShortName = FilePath.right(FilePath.length() - SlashPos - 1);
+
+        QString Msg = "#json begin {";
+        Msg += "'type':'chat',";
+        Msg += "'room':'" + mRoomName + "',";
+        Msg += "'name':'" + mUserName + "',";
+        Msg += "'text':'" + mUserName + "님이 파일을 공유하였습니다(" + ShortName + ")',";
+        Msg += "'subtype':'fileshare',";
+        Msg += "'filepath':'" + FilePath + "'";
+        Msg += "} #json end";
+        mSocket.write(Msg.toUtf8().constData());
+    }
+}
+
+void MainWindow::on_DownloadBtn_pressed()
+{
+    if(auto Button = qobject_cast<QPushButton*>(sender()))
+    {
+        QFileDialog Dialog(nullptr, "전송받을 폴더를 선택하세요");
+        Dialog.setFileMode(QFileDialog::Directory);
+        if(Dialog.exec())
+        {
+            const QString DirPath = Dialog.selectedFiles()[0];
+            auto Data = (MyData*) Button->userData(0);
+
+            QString Msg = "#json begin {";
+            Msg += "'type':'chat',";
+            Msg += "'room':'" + mRoomName + "',";
+            Msg += "'name':'" + mUserName + "',";
+            Msg += "'text':'파일받기를 시작합니다',";
+            Msg += "'subtype':'getfile',";
+            Msg += "'sender':'" + Data->mSender + "',";
+            Msg += "'filepath':'" + Data->mFilePath + "'";
+            Msg += "} #json end";
+            mSocket.write(Msg.toUtf8().constData());
+        }
     }
 }
