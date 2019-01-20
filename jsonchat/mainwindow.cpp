@@ -6,6 +6,7 @@
 #include <QLabel>
 #include <QHBoxLayout>
 #include <QObjectUserData>
+#include <QStandardPaths>
 #include <QMessageBox>
 //QMessageBox(QMessageBox::Information, "Debug", Text).exec();
 
@@ -52,7 +53,7 @@ void MainWindow::OnMessage(const char* text)
             auto NewName = NewJson["name"].toString("???");
             auto NewText = NewJson["text"].toString("...");
 
-            if(NewSubType.indexOf("fileshare") != -1)
+            if(NewSubType == "fileshare")
             {
                 // 데이터
                 auto NewFilePath = NewJson["filepath"].toString();
@@ -67,8 +68,8 @@ void MainWindow::OnMessage(const char* text)
 
                 // 위젯
                 QHBoxLayout* NewLayout = new QHBoxLayout();
-                NewLayout->addWidget(NewButton);
                 NewLayout->addWidget(new QLabel(NewText));
+                NewLayout->addWidget(NewButton);
                 QWidget* NewWidget = new QWidget();
                 NewWidget->setLayout(NewLayout);
 
@@ -80,7 +81,7 @@ void MainWindow::OnMessage(const char* text)
 
                 ui->TalkList->setItemWidget(NewItem, NewWidget);
             }
-            else if(NewSubType.indexOf("getfile") != -1)
+            else if(NewSubType == "getfile")
             {
                 QListWidgetItem* NewItem = new QListWidgetItem("<" + NewName + "> " + NewText);
                 NewItem->setBackgroundColor(QColor(255, 224, 192));
@@ -100,6 +101,7 @@ void MainWindow::OnMessage(const char* text)
                 }
                 else ui->TalkList->addItem("[" + NewName + "] " + NewText);
             }
+            ui->TalkList->scrollToBottom();
         }
         mRecvText.remove(0, EndPos + 9);
     }
@@ -175,14 +177,17 @@ void MainWindow::on_FileBtn_pressed()
         const QString FilePath = Dialog.selectedFiles()[0];
         const int SlashPos = FilePath.lastIndexOf("/");
         const QString ShortName = FilePath.right(FilePath.length() - SlashPos - 1);
+        const int64_t FileSize = QFileInfo(FilePath).size();
 
         QString Msg = "#json begin {";
         Msg += "'type':'chat',";
         Msg += "'room':'" + mRoomName + "',";
         Msg += "'name':'" + mUserName + "',";
-        Msg += "'text':'" + mUserName + "님이 파일을 공유하였습니다(" + ShortName + ")',";
+        Msg += "'text':'" + mUserName + "님의 파일공유("
+            + ShortName + ", " + QString::number(FileSize) + "byte)',";
         Msg += "'subtype':'fileshare',";
-        Msg += "'filepath':'" + FilePath + "'";
+        Msg += "'filepath':'" + FilePath + "',";
+        Msg += "'filesize':'" + QString::number(FileSize) + "'";
         Msg += "} #json end";
         mSocket.write(Msg.toUtf8().constData());
     }
