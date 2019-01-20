@@ -38,3 +38,11 @@ FORMS += \
 qnx: target.path = /tmp/$${TARGET}/bin
 else: unix:!android: target.path = /opt/$${TARGET}/bin
 !isEmpty(target.path): INSTALLS += target
+
+# Assets
+ASSETS_IMAGE.files += ../assets/image
+ASSETS_IMAGE.path = /assets
+
+ios{
+    QMAKE_BUNDLE_DATA += ASSETS_IMAGE
+}

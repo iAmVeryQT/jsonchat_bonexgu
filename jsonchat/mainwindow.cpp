@@ -88,11 +88,14 @@ void MainWindow::OnMessage(const char* text)
             }
             else
             {
-                if(NewText.indexOf("[in-love]") != -1)
+                const int Pos1 = NewText.indexOf("[");
+                const int Pos2 = NewText.indexOf("]");
+                if(Pos1 != -1 && Pos1 < Pos2)
                 {
-                    QIcon NewIcon("../image/in-love.png");
+                    QString FileTitle = NewText.mid(Pos1 + 1, Pos2 - Pos1 - 1);
+                    QIcon NewIcon("../assets/image/" + FileTitle + ".png");
                     QListWidgetItem* NewItem = new QListWidgetItem(NewIcon,
-                        "[" + NewName + "] " + NewText.remove("[in-love]"));
+                        "[" + NewName + "] " + NewText.remove("[" + FileTitle + "]"));
                     ui->TalkList->addItem(NewItem);
                 }
                 else ui->TalkList->addItem("[" + NewName + "] " + NewText);
