@@ -1,8 +1,9 @@
-#ifndef MAINWINDOW_H
+﻿#ifndef MAINWINDOW_H
 #define MAINWINDOW_H
 
 #include <QMainWindow>
 #include <QTcpSocket>
+#include <QFile>
 
 namespace Ui {
 class MainWindow;
@@ -45,6 +46,7 @@ private:
     QString mUserName;
     QString mUserText;
     QString mRecvText;
+    QList<QFile*> mFileWorks;
 };
 
 #endif // MAINWINDOW_H
