@@ -8,10 +8,16 @@
 #include <QObjectUserData>
 #include <QStandardPaths>
 #include <QMessageBox>
-//QMessageBox(QMessageBox::Information, "Debug", Text).exec();
+
+#define KOREAN(STR) QString::fromWCharArray(L##STR)
+#define DEBUG(STR) QMessageBox(QMessageBox::Information, "Debug", STR).exec()
 
 class MyData : public QObjectUserData
 {
+public:
+    MyData() {}
+    ~MyData() override {}
+
 public:
     QString mSender;
     QString mFilePath;
@@ -30,14 +36,14 @@ MainWindow::MainWindow(QWidget *parent) :
     mRoomName = "123";
     ui->RoomName->setText(mRoomName);
 
-    mUserName = QString::fromWCharArray(L"익명");
+    mUserName = KOREAN("익명");
     ui->UserName->setText(mUserName);
 }
 
 MainWindow::~MainWindow()
 {
     delete ui;
-    foreach(auto CurFile, mFileWorks)
+    foreach(auto& CurFile, mFileWorks)
     {
         if(CurFile != nullptr)
         {
@@ -70,7 +76,7 @@ void MainWindow::OnMessage(const char* text)
                 NewData->mFilePath = FilePath;
 
                 // 버튼
-                auto NewButton = new QPushButton(QString::fromWCharArray(L"파일받기"));
+                auto NewButton = new QPushButton(KOREAN("파일받기"));
                 NewButton->setUserData(0, NewData);
                 connect(NewButton, SIGNAL(pressed()), this, SLOT(on_DownloadBtn_pressed()));
 
@@ -116,7 +122,7 @@ void MainWindow::OnMessage(const char* text)
                             Msg += "'room':'" + mRoomName + "',";
                             Msg += "'name':'" + mUserName + "',";
                             Msg += "'to':'" + Name + "',";
-                            Msg += QString::fromWCharArray(L"'text':'송신완료!',");
+                            Msg += KOREAN("'text':'송신완료!',");
                             Msg += "'subtype':'setfile',";
                             Msg += "'fileid':'" + FileID + "',";
                             Msg += "'done':'1',";
@@ -239,7 +245,7 @@ void MainWindow::readyPeer()
 
 void MainWindow::on_FileBtn_pressed()
 {
-    QFileDialog Dialog(nullptr, QString::fromWCharArray(L"전송할 파일을 선택하세요"));
+    QFileDialog Dialog(nullptr, KOREAN("전송할 파일을 선택하세요"));
     if(Dialog.exec())
     {
         const QString FilePath = Dialog.selectedFiles()[0];
@@ -251,7 +257,7 @@ void MainWindow::on_FileBtn_pressed()
         Msg += "'type':'chat',";
         Msg += "'room':'" + mRoomName + "',";
         Msg += "'name':'" + mUserName + "',";
-        Msg += "'text':'" + mUserName + QString::fromWCharArray(L"님의 파일공유(")
+        Msg += "'text':'" + mUserName + KOREAN("님의 파일공유(")
             + ShortName + ", " + QString::number(FileSize) + "byte)',";
         Msg += "'subtype':'fileshare',";
         Msg += "'filepath':'" + FilePath + "',";
@@ -265,7 +271,7 @@ void MainWindow::on_DownloadBtn_pressed()
 {
     if(auto Button = qobject_cast<QPushButton*>(sender()))
     {
-        QFileDialog Dialog(nullptr, QString::fromWCharArray(L"전송받을 폴더를 선택하세요"));
+        QFileDialog Dialog(nullptr, KOREAN("전송받을 폴더를 선택하세요"));
         Dialog.setFileMode(QFileDialog::Directory);
         if(Dialog.exec())
         {
@@ -282,17 +288,18 @@ void MainWindow::on_DownloadBtn_pressed()
             QFile* WriteFile = new QFile(DirPath + "/" + ShortName + ".download");
             if(WriteFile->open(QFileDevice::WriteOnly))
             {
+                const int FileID = mFileWorks.length();
                 mFileWorks.append(WriteFile);
 
                 QString Msg = "#json begin {";
                 Msg += "'type':'chat',";
                 Msg += "'room':'" + mRoomName + "',";
                 Msg += "'name':'" + mUserName + "',";
-                Msg += QString::fromWCharArray(L"'text':'파일받기를 시작합니다',");
+                Msg += KOREAN("'text':'파일받기를 시작합니다',");
                 Msg += "'subtype':'getfile',";
                 Msg += "'sender':'" + Data->mSender + "',";
                 Msg += "'filepath':'" + Data->mFilePath + "',";
-                Msg += "'fileid':'" + QString::number(mFileWorks.length() - 1) + "'";
+                Msg += "'fileid':'" + QString::number(FileID) + "'";
                 Msg += "} #json end";
                 mSocket.write(Msg.toUtf8().constData());
             }
