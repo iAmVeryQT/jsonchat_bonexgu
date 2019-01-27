@@ -8,16 +8,13 @@
 #include <QObjectUserData>
 #include <QStandardPaths>
 #include <QMessageBox>
+#include <QThread>
 
 #define KOREAN(STR) QString::fromWCharArray(L##STR)
 #define DEBUG(STR) QMessageBox(QMessageBox::Information, "Debug", STR).exec()
 
 class MyData : public QObjectUserData
 {
-public:
-    MyData() {}
-    ~MyData() override {}
-
 public:
     QString mSender;
     QString mFilePath;
@@ -107,15 +104,16 @@ void MainWindow::OnMessage(const char* text)
                     auto FilePath = NewJson["filepath"].toString();
                     auto FileID = NewJson["fileid"].toString();
 
-                    QFile ReadFile(FilePath);
-                    if(ReadFile.open(QFileDevice::ReadOnly))
+                    QFile* ReadFile = new QFile(FilePath);
+                    if(ReadFile->open(QFileDevice::ReadOnly))
                     {
-                        auto FileSize = ReadFile.size();
-                        if(FileSize < 1024 * 100)
+                        auto FileSize = ReadFile->size();
+                        if(FileSize < 1024 * 10)
                         {
-                            QByteArray NewBuffer = ReadFile.read(FileSize);
+                            QByteArray NewBuffer = ReadFile->read(FileSize);
                             QByteArray NewBase64 = NewBuffer.toBase64();
-                            ReadFile.close();
+                            ReadFile->close();
+                            delete ReadFile;
 
                             QString Msg = "#json begin {";
                             Msg += "'type':'chat',";
@@ -132,6 +130,50 @@ void MainWindow::OnMessage(const char* text)
                         }
                         else
                         {
+                            QThread* NewThread = QThread::create([this, ReadFile, FileSize, FileID, Name]
+                            {
+                                QTcpSocket NewSocket;
+                                NewSocket.connectToHost(mAddress, 10125);
+                                if(NewSocket.waitForConnected(5000))
+                                {
+                                    qint64 SendSize = FileSize;
+                                    bool Done = false;
+                                    while(!Done)
+                                    {
+                                        const qint64 BlockSize = std::min((qint64) 1024 * 10, SendSize);
+                                        QByteArray NewBuffer = ReadFile->read(BlockSize);
+                                        QByteArray NewBase64 = NewBuffer.toBase64();
+
+                                        SendSize -= BlockSize;
+                                        Done = (SendSize == 0);
+
+                                        QString Msg = "#json begin {";
+                                        Msg += "'type':'chat',";
+                                        Msg += "'room':'" + mRoomName + "',";
+                                        Msg += "'name':'" + mUserName + "_sender',";
+                                        Msg += "'to':'" + Name + "',";
+                                        if(Done)
+                                            Msg += KOREAN("'text':'송신완료!',");
+                                        else
+                                        {
+                                            QString Score;
+                                            Score.sprintf("[%.02f%%]", (FileSize - SendSize) * 100 / (float) FileSize);
+                                            Msg += KOREAN("'text':'송신중... ") + Score + "',";
+                                        }
+                                        Msg += "'subtype':'setfile',";
+                                        Msg += "'fileid':'" + FileID + "',";
+                                        Msg += (Done)? "'done':'1'," : "'done':'0',";
+                                        Msg += QString("'base64':'") + NewBase64.constData() + "'";
+                                        Msg += "} #json end";
+                                        NewSocket.write(Msg.toUtf8().constData());
+                                        if(!NewSocket.waitForBytesWritten(5000))
+                                            break;
+                                    }
+                                }
+                                ReadFile->close();
+                                delete ReadFile;
+                            });
+                            NewThread->start();
                         }
                     }
                 }
