@@ -2,13 +2,13 @@
 #include "ui_mainwindow.h"
 #include <QCloseEvent>
 #include <QSizePolicy>
-#include <QDebug>
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::MainWindow)
 {
-    QIcon icon("../assets/icon/server.png");
+    QString ResPath = QCoreApplication::applicationDirPath() + "/../../assets/";
+    QIcon icon(ResPath + "icon/server.png");
     setWindowIcon(icon);
     ui->setupUi(this);
 
@@ -35,7 +35,7 @@ void MainWindow::ServerOn()
         mServer.listen(QHostAddress::Any, 10125);
         ui->user->setDisabled(false);
         ui->log->setDisabled(false);
-        qDebug() << "Server : listen";
+        ui->log->addItem("#Server : listen");
     }
 }
 
@@ -46,7 +46,7 @@ void MainWindow::ServerOff()
         mServer.close();
         ui->user->setDisabled(true);
         ui->log->setDisabled(true);
-        qDebug() << "Server : close";
+        ui->log->addItem("#Server : close");
     }
 }
 
