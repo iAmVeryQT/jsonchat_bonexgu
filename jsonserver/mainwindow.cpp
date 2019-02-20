@@ -12,8 +12,9 @@ MainWindow::MainWindow(QWidget *parent) :
     setWindowIcon(icon);
     ui->setupUi(this);
 
-    mServer.SetLogWidget(ui->log);
+    mServer.SetWidgets(ui->room, ui->user, ui->log);
 
+    ui->room->setDisabled(true);
     ui->user->setDisabled(true);
     ui->log->setDisabled(true);
 
@@ -35,6 +36,7 @@ void MainWindow::ServerOn()
     if(!mServer.isListening())
     {
         mServer.listen(QHostAddress::Any, 10125);
+        ui->room->setDisabled(false);
         ui->user->setDisabled(false);
         ui->log->setDisabled(false);
         ui->log->addItem("#Server : listen");
@@ -46,6 +48,7 @@ void MainWindow::ServerOff()
     if(mServer.isListening())
     {
         mServer.close();
+        ui->room->setDisabled(true);
         ui->user->setDisabled(true);
         ui->log->setDisabled(true);
         ui->log->addItem("#Server : close");

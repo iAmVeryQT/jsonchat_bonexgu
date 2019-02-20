@@ -8,9 +8,8 @@
 class PeerData : public QObjectUserData
 {
 public:
-    PeerData() : mID(MakeID())
-    {
-    }
+    PeerData() : mID(MakeID()) {}
+    ~PeerData() {}
 
 private:
     static int MakeID()
@@ -21,7 +20,8 @@ private:
 
 public:
     const int mID;
-    QString mRoomName;
+    QString mLastUserName;
+    QString mLastRoomName;
 };
 
 class RoomData
@@ -40,15 +40,21 @@ public:
 private slots:
     void acceptPeer();
     void readyPeer();
-    void errorPeer(QAbstractSocket::SocketError error);
+    void errorPeer(QAbstractSocket::SocketError);
 
 public:
-    void SetLogWidget(QListWidget* widget);
+    void SetWidgets(QListWidget* room, QListWidget* peer, QListWidget* log);
+    void UpdateRoom(QString roomname, int peercount);
+    void RemoveRoom(QString roomname);
+    void UpdatePeer(QString peerid, QString username);
+    void RemovePeer(QString peerid);
     void AddLog(QString text);
     void ExitRoom(QString roomname, int peerid);
 
 private:
-    QListWidget* mRefWidget;
+    QListWidget* mRoomWidget;
+    QListWidget* mPeerWidget;
+    QListWidget* mLogWidget;
     QMap<QString, RoomData*> mRoomPool;
 };
 

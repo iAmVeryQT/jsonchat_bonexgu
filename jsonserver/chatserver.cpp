@@ -6,17 +6,21 @@
 
 ChatServer::ChatServer()
 {
-    mRefWidget = nullptr;
+    mRoomWidget = nullptr;
+    mPeerWidget = nullptr;
+    mLogWidget = nullptr;
     connect(this, SIGNAL(newConnection()), this, SLOT(acceptPeer()));
 }
 
 void ChatServer::acceptPeer()
 {
     QTcpSocket* NewPeer = nextPendingConnection();
-    auto NewPeerData = new PeerData();
-    NewPeer->setUserData(0, NewPeerData);
+    auto NewData = new PeerData();
+    NewPeer->setUserData(0, NewData);
 
-    AddLog(KOREAN("손님이 서버에 입장하였습니다 : ") + QString::number(NewPeerData->mID));
+    mPeerWidget->addItem("ID_" + QString::number(NewData->mID));
+    mPeerWidget->sortItems();
+    AddLog(KOREAN("서버입장 : ID_") + QString::number(NewData->mID));
 
     connect(NewPeer, SIGNAL(readyRead()), this, SLOT(readyPeer()));
     connect(NewPeer, SIGNAL(error(QAbstractSocket::SocketError)),
@@ -41,25 +45,33 @@ void ChatServer::readyPeer()
             if(BeginPos != -1)
             {
                 BeginPos += 11;
-                // 룸이름 얻기
                 auto NewJson = QJsonDocument::fromJson(
                     OneString.mid(BeginPos, EndPos - BeginPos).toUtf8());
-                auto RoomName = NewJson["room"].toString("global");
+
+                // 자신의 이름이 달라졌을 경우
+                auto UserName = NewJson["name"].toString("noname");
+                if(CurData->mLastUserName != UserName)
+                {
+                    CurData->mLastUserName = UserName;
+                    UpdatePeer("ID_" + QString::number(CurData->mID), UserName);
+                }
 
                 // 자신의 룸이름이 달라졌을 경우
-                if(CurData->mRoomName != RoomName)
+                auto RoomName = NewJson["room"].toString("global");
+                if(CurData->mLastRoomName != RoomName)
                 {
                     // 이전 룸 이름이 존재한다면 방을 바꾸는 것이다!
-                    if(0 < CurData->mRoomName.length())
-                        ExitRoom(CurData->mRoomName, CurData->mID);
-                    CurData->mRoomName = RoomName;
+                    if(0 < CurData->mLastRoomName.length())
+                        ExitRoom(CurData->mLastRoomName, CurData->mID);
+                    CurData->mLastRoomName = RoomName;
                 }
 
                 // 룸찾기, 없으면 처음으로 만든다
                 if(!mRoomPool.contains(RoomName))
                 {
                     mRoomPool.insert(RoomName, new RoomData);
-                    AddLog(KOREAN("룸이 생성되었습니다 : ") + RoomName);
+                    mRoomWidget->addItem(RoomName);
+                    mRoomWidget->sortItems();
                 }
                 auto CurRoom = mRoomPool.value(RoomName);
 
@@ -67,8 +79,8 @@ void ChatServer::readyPeer()
                 if(!CurRoom->mPeers.contains(CurData->mID))
                 {
                     CurRoom->mPeers.insert(CurData->mID, CurPeer);
-                    AddLog(KOREAN("룸에 회원이 입장하였습니다 : ")
-                        + QString::number(CurData->mID) + " >> " + RoomName);
+                    UpdateRoom(RoomName, CurRoom->mPeers.count());
+                    AddLog("[" + RoomName + KOREAN("]입장 : ID_") + QString::number(CurData->mID));
                 }
 
                 // 해당 룸에 존재하는 모든 피어에게 회람
@@ -79,40 +91,71 @@ void ChatServer::readyPeer()
     }
 }
 
-void ChatServer::errorPeer(QAbstractSocket::SocketError error)
+void ChatServer::errorPeer(QAbstractSocket::SocketError)
 {
     QTcpSocket* CurPeer = (QTcpSocket*) sender();
     auto CurData = (PeerData*) CurPeer->userData(0);
 
-    if(0 < CurData->mRoomName.length())
-        ExitRoom(CurData->mRoomName, CurData->mID);
+    if(0 < CurData->mLastRoomName.length())
+        ExitRoom(CurData->mLastRoomName, CurData->mID);
 
-    AddLog(KOREAN("손님이 서버에서 퇴장하였습니다 : ") + QString::number(CurData->mID));
+    RemovePeer("ID_" + QString::number(CurData->mID));
+    AddLog(KOREAN("서버퇴장 : ID_") + QString::number(CurData->mID));
 }
 
-void ChatServer::SetLogWidget(QListWidget* widget)
+void ChatServer::SetWidgets(QListWidget* room, QListWidget* peer, QListWidget* log)
 {
-    mRefWidget = widget;
+    mRoomWidget = room;
+    mPeerWidget = peer;
+    mLogWidget = log;
+}
+
+void ChatServer::UpdateRoom(QString roomname, int peercount)
+{
+    auto RoomList = mRoomWidget->findItems(roomname, Qt::MatchStartsWith);
+    for(auto CurRoom : RoomList)
+        CurRoom->setText(roomname + "(" + QString::number(peercount) + "P)");
+}
+
+void ChatServer::RemoveRoom(QString roomname)
+{
+    auto RoomList = mRoomWidget->findItems(roomname, Qt::MatchStartsWith);
+    for(auto CurRoom : RoomList)
+        delete mRoomWidget->takeItem(mRoomWidget->row(CurRoom));
+}
+
+void ChatServer::UpdatePeer(QString peerid, QString username)
+{
+    auto PeerList = mPeerWidget->findItems(peerid, Qt::MatchStartsWith);
+    for(auto CurPeer : PeerList)
+        CurPeer->setText(peerid + "(" + username + ")");
+}
+
+void ChatServer::RemovePeer(QString peerid)
+{
+    auto PeerList = mPeerWidget->findItems(peerid, Qt::MatchStartsWith);
+    for(auto CurPeer : PeerList)
+        delete mPeerWidget->takeItem(mPeerWidget->row(CurPeer));
 }
 
 void ChatServer::AddLog(QString text)
 {
-    mRefWidget->addItem(text);
-    mRefWidget->scrollToBottom();
+    mLogWidget->addItem(text);
+    mLogWidget->scrollToBottom();
 }
 
 void ChatServer::ExitRoom(QString roomname, int peerid)
 {
     if(mRoomPool.contains(roomname))
     {
-        AddLog(KOREAN("룸에서 회원이 퇴장하였습니다 : ") + QString::number(peerid) + " << " + roomname);
-
         auto CurRoom = mRoomPool.value(roomname);
         CurRoom->mPeers.remove(peerid);
         if(CurRoom->mPeers.count() == 0)
         {
             mRoomPool.remove(roomname);
-            AddLog(KOREAN("룸이 파괴되었습니다 : ") + roomname);
+            RemoveRoom(roomname);
         }
+        else UpdateRoom(roomname, CurRoom->mPeers.count());
+        AddLog("[" + roomname + KOREAN("]퇴장 : ID_") + QString::number(peerid));
     }
 }

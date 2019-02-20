@@ -85,16 +85,6 @@
      <bool>true</bool>
     </property>
    </widget>
-   <widget class="QTableWidget" name="user">
-    <property name="geometry">
-     <rect>
-      <x>10</x>
-      <y>10</y>
-      <width>281</width>
-      <height>111</height>
-     </rect>
-    </property>
-   </widget>
    <widget class="QListWidget" name="log">
     <property name="geometry">
      <rect>
@@ -106,6 +96,26 @@
     </property>
     <property name="verticalScrollBarPolicy">
      <enum>Qt::ScrollBarAlwaysOn</enum>
+    </property>
+   </widget>
+   <widget class="QListWidget" name="room">
+    <property name="geometry">
+     <rect>
+      <x>10</x>
+      <y>10</y>
+      <width>101</width>
+      <height>111</height>
+     </rect>
+    </property>
+   </widget>
+   <widget class="QListWidget" name="user">
+    <property name="geometry">
+     <rect>
+      <x>120</x>
+      <y>10</y>
+      <width>171</width>
+      <height>111</height>
+     </rect>
     </property>
    </widget>
   </widget>
