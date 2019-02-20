@@ -12,6 +12,8 @@ MainWindow::MainWindow(QWidget *parent) :
     setWindowIcon(icon);
     ui->setupUi(this);
 
+    mServer.SetLogWidget(ui->log);
+
     ui->user->setDisabled(true);
     ui->log->setDisabled(true);
 

@@ -229,7 +229,7 @@ void MainWindow::on_ConnectBtn_clicked()
     if(mSocket.waitForConnected(5000))
     {
         ui->AddressEdit->setEnabled(false);
-        ui->RoomName->setEnabled(false);
+        //ui->RoomName->setEnabled(false);
         ui->UserName->setEnabled(false);
         ui->TalkList->setEnabled(true);
         ui->TalkEdit->setEnabled(true);
@@ -260,10 +260,10 @@ void MainWindow::on_TalkEdit_textEdited(const QString &arg1)
 void MainWindow::on_TalkEdit_returnPressed()
 {
     QString Msg = "#json begin {";
-    Msg += "'type':'chat',";
-    Msg += "'room':'" + mRoomName + "',";
-    Msg += "'name':'" + mUserName + "',";
-    Msg += "'text':'" + mUserText + "'";
+    Msg += "\"type\":\"chat\",";
+    Msg += "\"room\":\"" + mRoomName + "\",";
+    Msg += "\"name\":\"" + mUserName + "\",";
+    Msg += "\"text\":\"" + mUserText + "\"";
     Msg += "} #json end";
     mSocket.write(Msg.toUtf8().constData());
     ui->TalkEdit->setText("");
@@ -334,14 +334,14 @@ void MainWindow::on_DownloadBtn_pressed()
                 mFileWorks.append(WriteFile);
 
                 QString Msg = "#json begin {";
-                Msg += "'type':'chat',";
-                Msg += "'room':'" + mRoomName + "',";
-                Msg += "'name':'" + mUserName + "',";
-                Msg += KOREAN("'text':'파일받기를 시작합니다',");
-                Msg += "'subtype':'getfile',";
-                Msg += "'sender':'" + Data->mSender + "',";
-                Msg += "'filepath':'" + Data->mFilePath + "',";
-                Msg += "'fileid':'" + QString::number(FileID) + "'";
+                Msg += "\"type\":\"chat\",";
+                Msg += "\"room\":\"" + mRoomName + "\",";
+                Msg += "\"name\":\"" + mUserName + "\",";
+                Msg += KOREAN("\"text\":\"파일받기를 시작합니다\",");
+                Msg += "\"subtype\":\"getfile\",";
+                Msg += "\"sender\":\"" + Data->mSender + "\",";
+                Msg += "\"filepath\":\"" + Data->mFilePath + "\",";
+                Msg += "\"fileid\":\"" + QString::number(FileID) + "\"";
                 Msg += "} #json end";
                 mSocket.write(Msg.toUtf8().constData());
             }

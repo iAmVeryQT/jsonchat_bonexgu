@@ -3,52 +3,31 @@
 
 #include <QTcpServer>
 #include <QTcpSocket>
+#include <QListWidget>
 
 class PeerData : public QObjectUserData
 {
 public:
     PeerData() : mID(MakeID())
     {
-        mRoomID = -1;
-    }
-
-    virtual ~PeerData()
-    {
     }
 
 private:
     static int MakeID()
     {
-        static int globalid = -1;
-        return ++globalid;
+        static int lastid = -1;
+        return ++lastid;
     }
 
 public:
     const int mID;
-    int mRoomID;
+    QString mRoomName;
 };
 
 class RoomData
 {
 public:
-    RoomData() : mID(MakeID())
-    {
-    }
-
-    virtual ~RoomData()
-    {
-    }
-
-private:
-    static int MakeID()
-    {
-        static int globalid = -1;
-        return ++globalid;
-    }
-
-public:
-    const int mID;
-    QList<int> mPeerID;
+    QMap<int, QTcpSocket*> mPeers;
 };
 
 class ChatServer : public QTcpServer
@@ -63,9 +42,14 @@ private slots:
     void readyPeer();
     void errorPeer(QAbstractSocket::SocketError error);
 
+public:
+    void SetLogWidget(QListWidget* widget);
+    void AddLog(QString text);
+    void ExitRoom(QString roomname, int peerid);
+
 private:
-    QMap<int, QTcpSocket*> mPeerMap;
-    QMap<int, RoomData> mRoomMap;
+    QListWidget* mRefWidget;
+    QMap<QString, RoomData*> mRoomPool;
 };
 
 #endif // CHATSERVER_H
