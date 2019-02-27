@@ -5,6 +5,8 @@
 #include <QTcpSocket>
 #include <QFile>
 
+#include "emojipopup.h"
+
 namespace Ui {
 class MainWindow;
 }
@@ -18,6 +20,7 @@ public:
     ~MainWindow();
 
     void OnMessage(const char* text);
+    void SendEmoji(QString name);
 
 private slots:
     void on_ConnectBtn_clicked();
@@ -38,6 +41,8 @@ private slots:
 
     void on_DownloadBtn_pressed();
 
+    void on_EmojiButton_clicked();
+
 private:
     Ui::MainWindow *ui;
     QTcpSocket mSocket;
@@ -47,6 +52,7 @@ private:
     QString mUserText;
     QString mRecvText;
     QList<QFile*> mFileWorks;
+    EmojiPopup mEmoji;
 };
 
 #endif // MAINWINDOW_H

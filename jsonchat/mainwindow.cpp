@@ -9,6 +9,7 @@
 #include <QStandardPaths>
 #include <QMessageBox>
 #include <QThread>
+#include <QScreen>
 
 #define KOREAN(STR) QString::fromWCharArray(L##STR)
 #define DEBUG(STR) QMessageBox(QMessageBox::Information, "Debug", STR).exec()
@@ -21,7 +22,7 @@ public:
 };
 
 MainWindow::MainWindow(QWidget *parent) :
-    QMainWindow(parent),
+    QMainWindow(parent), mEmoji(this),
     ui(new Ui::MainWindow)
 {
     ui->setupUi(this);
@@ -223,6 +224,17 @@ void MainWindow::OnMessage(const char* text)
     }
 }
 
+void MainWindow::SendEmoji(QString name)
+{
+    QString Msg = "#json begin {";
+    Msg += "\"type\":\"chat\",";
+    Msg += "\"room\":\"" + mRoomName + "\",";
+    Msg += "\"name\":\"" + mUserName + "\",";
+    Msg += "\"text\":\"" + name + "\"";
+    Msg += "} #json end";
+    mSocket.write(Msg.toUtf8().constData());
+}
+
 void MainWindow::on_ConnectBtn_clicked()
 {
     mSocket.connectToHost(mAddress, 10125);
@@ -232,6 +244,7 @@ void MainWindow::on_ConnectBtn_clicked()
         ui->TalkList->setEnabled(true);
         ui->TalkEdit->setEnabled(true);
         ui->FileBtn->setEnabled(true);
+        ui->EmojiButton->setEnabled(true);
     }
 }
 
@@ -345,4 +358,20 @@ void MainWindow::on_DownloadBtn_pressed()
             }
         }
     }
+}
+
+void MainWindow::on_EmojiButton_clicked()
+{
+    const QPoint ClickPos = QCursor::pos();
+    const QSize EmojiSize = mEmoji.size();
+    const QRect GeometryRect = QGuiApplication::screenAt(ClickPos)->geometry();
+    const int PosX = (GeometryRect.right() < ClickPos.x() + EmojiSize.width())?
+        ClickPos.x() - EmojiSize.width() : ClickPos.x();
+    const int PosY = (GeometryRect.bottom() < ClickPos.y() + EmojiSize.height())?
+        ClickPos.y() - EmojiSize.height() : ClickPos.y();
+    mEmoji.move(PosX, PosY);
+
+    mEmoji.show();
+    mEmoji.activateWindow();
+    mEmoji.setFocus();
 }
