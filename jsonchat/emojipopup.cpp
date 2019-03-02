@@ -57,5 +57,5 @@ void EmojiPopup::focusOutEvent(QFocusEvent*)
 void EmojiPopup::on_itemPressed(QTableWidgetItem* item)
 {
     QString Name = item->data(0).toString();
-    ((MainWindow*) parent())->SendEmoji(Name);
+    ((MainWindow*) parent())->SendMessage(Name);
 }

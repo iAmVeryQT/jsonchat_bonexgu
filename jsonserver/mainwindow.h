@@ -19,6 +19,13 @@ public:
     void ServerOn();
     void ServerOff();
 
+private slots:
+    void on_admin_clicked();
+
+    void on_blacklist_clicked();
+
+    void on_normal_clicked();
+
 private:
     void closeEvent(QCloseEvent* event) Q_DECL_OVERRIDE;
 

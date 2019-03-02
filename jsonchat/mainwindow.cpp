@@ -57,7 +57,8 @@ void MainWindow::OnMessage(const char* text)
     int BeginPos = 0, EndPos = 0;
     while((EndPos = mRecvText.indexOf("#json end")) != -1)
     {
-        if((BeginPos = mRecvText.indexOf("#json begin")) != -1)
+        BeginPos = mRecvText.indexOf("#json begin");
+        if(BeginPos != -1 && BeginPos < EndPos)
         {
             BeginPos += 11;
             auto NewJson = QJsonDocument::fromJson(mRecvText.mid(BeginPos, EndPos - BeginPos).toUtf8());
@@ -117,15 +118,15 @@ void MainWindow::OnMessage(const char* text)
                             delete ReadFile;
 
                             QString Msg = "#json begin {";
-                            Msg += "'type':'chat',";
-                            Msg += "'room':'" + mRoomName + "',";
-                            Msg += "'name':'" + mUserName + "',";
-                            Msg += "'to':'" + Name + "',";
-                            Msg += KOREAN("'text':'송신완료!',");
-                            Msg += "'subtype':'setfile',";
-                            Msg += "'fileid':'" + FileID + "',";
-                            Msg += "'done':'1',";
-                            Msg += QString("'base64':'") + NewBase64.constData() + "'";
+                            Msg += "\"type\":\"chat\",";
+                            Msg += "\"room\":\"" + mRoomName + "\",";
+                            Msg += "\"name\":\"" + mUserName + "\",";
+                            Msg += "\"to\":\"" + Name + "\",";
+                            Msg += KOREAN("\"text\":\"송신완료!\",");
+                            Msg += "\"subtype\":\"setfile\",";
+                            Msg += "\"fileid\":\"" + FileID + "\",";
+                            Msg += "\"done\":\"1\",";
+                            Msg += QString("\"base64\":\"") + NewBase64.constData() + "\"";
                             Msg += "} #json end";
                             mSocket.write(Msg.toUtf8().constData());
                         }
@@ -149,22 +150,22 @@ void MainWindow::OnMessage(const char* text)
                                         Done = (SendSize == 0);
 
                                         QString Msg = "#json begin {";
-                                        Msg += "'type':'chat',";
-                                        Msg += "'room':'" + mRoomName + "',";
-                                        Msg += "'name':'" + mUserName + "_sender',";
-                                        Msg += "'to':'" + Name + "',";
+                                        Msg += "\"type\":\"chat\",";
+                                        Msg += "\"room\":\"" + mRoomName + "\",";
+                                        Msg += "\"name\":\"" + mUserName + "_sender\",";
+                                        Msg += "\"to\":\"" + Name + "\",";
                                         if(Done)
-                                            Msg += KOREAN("'text':'송신완료!',");
+                                            Msg += KOREAN("\"text\":\"송신완료!\",");
                                         else
                                         {
                                             QString Score;
                                             Score.sprintf("[%.02f%%]", (FileSize - SendSize) * 100 / (float) FileSize);
-                                            Msg += KOREAN("'text':'송신중... ") + Score + "',";
+                                            Msg += KOREAN("\"text\":\"송신중... ") + Score + "\",";
                                         }
-                                        Msg += "'subtype':'setfile',";
-                                        Msg += "'fileid':'" + FileID + "',";
-                                        Msg += (Done)? "'done':'1'," : "'done':'0',";
-                                        Msg += QString("'base64':'") + NewBase64.constData() + "'";
+                                        Msg += "\"subtype\":\"setfile\",";
+                                        Msg += "\"fileid\":\"" + FileID + "\",";
+                                        Msg += (Done)? "\"done\":\"1\"," : "\"done\":\"0\",";
+                                        Msg += QString("\"base64\":\"") + NewBase64.constData() + "\"";
                                         Msg += "} #json end";
                                         NewSocket.write(Msg.toUtf8().constData());
                                         if(!NewSocket.waitForBytesWritten(5000))
@@ -224,13 +225,13 @@ void MainWindow::OnMessage(const char* text)
     }
 }
 
-void MainWindow::SendEmoji(QString name)
+void MainWindow::SendMessage(QString talk)
 {
     QString Msg = "#json begin {";
     Msg += "\"type\":\"chat\",";
     Msg += "\"room\":\"" + mRoomName + "\",";
     Msg += "\"name\":\"" + mUserName + "\",";
-    Msg += "\"text\":\"" + name + "\"";
+    Msg += "\"text\":\"" + talk + "\"";
     Msg += "} #json end";
     mSocket.write(Msg.toUtf8().constData());
 }
@@ -245,6 +246,7 @@ void MainWindow::on_ConnectBtn_clicked()
         ui->TalkEdit->setEnabled(true);
         ui->FileBtn->setEnabled(true);
         ui->EmojiButton->setEnabled(true);
+        SendMessage(""); // 방에 입장
     }
 }
 
@@ -270,13 +272,7 @@ void MainWindow::on_TalkEdit_textEdited(const QString &arg1)
 
 void MainWindow::on_TalkEdit_returnPressed()
 {
-    QString Msg = "#json begin {";
-    Msg += "\"type\":\"chat\",";
-    Msg += "\"room\":\"" + mRoomName + "\",";
-    Msg += "\"name\":\"" + mUserName + "\",";
-    Msg += "\"text\":\"" + mUserText + "\"";
-    Msg += "} #json end";
-    mSocket.write(Msg.toUtf8().constData());
+    SendMessage(mUserText);
     ui->TalkEdit->setText("");
 }
 
@@ -307,14 +303,14 @@ void MainWindow::on_FileBtn_pressed()
         const int64_t FileSize = QFileInfo(FilePath).size();
 
         QString Msg = "#json begin {";
-        Msg += "'type':'chat',";
-        Msg += "'room':'" + mRoomName + "',";
-        Msg += "'name':'" + mUserName + "',";
-        Msg += "'text':'" + mUserName + KOREAN("님의 파일공유(")
-            + ShortName + ", " + QString::number(FileSize) + "byte)',";
-        Msg += "'subtype':'fileshare',";
-        Msg += "'filepath':'" + FilePath + "',";
-        Msg += "'filesize':'" + QString::number(FileSize) + "'";
+        Msg += "\"type\":\"chat\",";
+        Msg += "\"room\":\"" + mRoomName + "\",";
+        Msg += "\"name\":\"" + mUserName + "\",";
+        Msg += "\"text\":\"" + mUserName + KOREAN("님의 파일공유(")
+            + ShortName + ", " + QString::number(FileSize) + "byte)\",";
+        Msg += "\"subtype\":\"fileshare\",";
+        Msg += "\"filepath\":\"" + FilePath + "\",";
+        Msg += "\"filesize\":\"" + QString::number(FileSize) + "\"";
         Msg += "} #json end";
         mSocket.write(Msg.toUtf8().constData());
     }

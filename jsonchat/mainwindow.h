@@ -20,7 +20,7 @@ public:
     ~MainWindow();
 
     void OnMessage(const char* text);
-    void SendEmoji(QString name);
+    void SendMessage(QString talk);
 
 private slots:
     void on_ConnectBtn_clicked();

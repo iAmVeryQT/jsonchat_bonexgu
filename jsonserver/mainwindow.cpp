@@ -60,3 +60,30 @@ void MainWindow::closeEvent(QCloseEvent* event)
     hide();
     event->ignore();
 }
+
+void MainWindow::on_admin_clicked()
+{
+    auto Items = ui->user->selectedItems();
+    if(Items.count() == 1)
+    {
+        auto UserName = Items[0]->data(1).toString();
+        if(0 < UserName.length())
+            mServer.AddAdmin(UserName);
+    }
+}
+
+void MainWindow::on_blacklist_clicked()
+{
+    auto Items = ui->user->selectedItems();
+    if(Items.count() == 1)
+    {
+        auto UserName = Items[0]->data(1).toString();
+        if(0 < UserName.length())
+            mServer.AddBlack(UserName);
+    }
+}
+
+void MainWindow::on_normal_clicked()
+{
+    mServer.ClearAdminAndBlack();
+}
