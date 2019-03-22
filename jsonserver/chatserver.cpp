@@ -1,4 +1,6 @@
 ﻿#include "chatserver.h"
+#include "chatchain.h"
+
 #include <QDebug>
 #include <QJsonDocument>
 
@@ -6,10 +8,16 @@
 
 ChatServer::ChatServer()
 {
+    mRefChain = nullptr;
     mRoomWidget = nullptr;
     mPeerWidget = nullptr;
     mLogWidget = nullptr;
     connect(this, SIGNAL(newConnection()), this, SLOT(acceptPeer()));
+}
+
+void ChatServer::SetChain(ChatChain* chain)
+{
+    mRefChain = chain;
 }
 
 void ChatServer::acceptPeer()
@@ -44,6 +52,10 @@ void ChatServer::readyPeer()
             BeginPos = mStringDump.indexOf("#json begin");
             if(BeginPos != -1 && BeginPos < EndPos)
             {
+                // 체인에도 올려줌
+                mRefChain->BroadcastMessage(
+                    mStringDump.mid(BeginPos, (EndPos + 9) - BeginPos).toUtf8());
+
                 BeginPos += 11;
                 auto NewJson = QJsonDocument::fromJson(
                     mStringDump.mid(BeginPos, EndPos - BeginPos).toUtf8());
@@ -140,6 +152,18 @@ void ChatServer::errorPeer(QAbstractSocket::SocketError)
 {
     QTcpSocket* CurPeer = (QTcpSocket*) sender();
     ClosePeer(CurPeer);
+}
+
+void ChatServer::RelayMessage(const QByteArray& bytes)
+{
+    auto NewJson = QJsonDocument::fromJson(bytes);
+    auto RoomName = NewJson["room"].toString("global");
+    if(mRoomPool.contains(RoomName))
+    {
+        auto CurRoom = mRoomPool.value(RoomName);
+        for(auto CurRoomPeer : CurRoom->mPeers)
+            CurRoomPeer->write(bytes);
+    }
 }
 
 void ChatServer::SendMessageForAdmin(QTcpSocket* peer, QString name)

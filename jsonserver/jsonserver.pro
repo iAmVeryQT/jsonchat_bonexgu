@@ -29,13 +29,15 @@ SOURCES += \
         mainwindow.cpp \
         traymenu.cpp \
         trayicon.cpp \
-    chatserver.cpp
+        chatserver.cpp \
+        chatchain.cpp
 
 HEADERS += \
         mainwindow.h \
         traymenu.h \
         trayicon.h \
-    chatserver.h
+        chatserver.h \
+        chatchain.h
 
 FORMS += \
         mainwindow.ui \

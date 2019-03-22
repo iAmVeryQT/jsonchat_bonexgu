@@ -13,6 +13,10 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->setupUi(this);
 
     mServer.SetWidgets(ui->room, ui->user, ui->log);
+    mServer.SetChain(&mChain);
+
+    mChain.SetChainEditor(ui->chainusers, ui->log);
+    mChain.SetServer(&mServer);
 
     ui->room->setDisabled(true);
     ui->user->setDisabled(true);
@@ -86,4 +90,9 @@ void MainWindow::on_blacklist_clicked()
 void MainWindow::on_normal_clicked()
 {
     mServer.ClearAdminAndBlack();
+}
+
+void MainWindow::on_connect_clicked()
+{
+    mChain.Connect(ui->address->text(), ui->nick->text());
 }

@@ -30,6 +30,8 @@ public:
     QMap<int, QTcpSocket*> mPeers;
 };
 
+class ChatChain;
+
 class ChatServer : public QTcpServer
 {
     Q_OBJECT
@@ -37,10 +39,15 @@ class ChatServer : public QTcpServer
 public:
     ChatServer();
 
+    void SetChain(ChatChain* chain);
+
 private slots:
     void acceptPeer();
     void readyPeer();
     void errorPeer(QAbstractSocket::SocketError);
+
+public:
+    void RelayMessage(const QByteArray& bytes);
 
 public:
     void SendMessageForAdmin(QTcpSocket* peer, QString name);
@@ -62,6 +69,7 @@ public:
     void ClearAdminAndBlack();
 
 private:
+    ChatChain* mRefChain;
     QListWidget* mRoomWidget;
     QListWidget* mPeerWidget;
     QListWidget* mLogWidget;

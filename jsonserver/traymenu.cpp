@@ -10,6 +10,9 @@ traymenu::traymenu(QWidget *parent) :
     ui->setupUi(this);
 
     mServerOn = false;
+
+    on_gui_clicked();
+    on_onoff_clicked();
 }
 
 traymenu::~traymenu()

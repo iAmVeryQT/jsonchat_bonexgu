@@ -2,6 +2,7 @@
 #define MAINWINDOW_H
 
 #include "chatserver.h"
+#include "chatchain.h"
 #include <QMainWindow>
 
 namespace Ui {
@@ -26,12 +27,15 @@ private slots:
 
     void on_normal_clicked();
 
+    void on_connect_clicked();
+
 private:
     void closeEvent(QCloseEvent* event) Q_DECL_OVERRIDE;
 
 private:
     Ui::MainWindow *ui;
     ChatServer mServer;
+    ChatChain mChain;
 };
 
 #endif // MAINWINDOW_H

@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>400</width>
-    <height>300</height>
+    <height>310</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -57,7 +57,7 @@
     <property name="geometry">
      <rect>
       <x>10</x>
-      <y>250</y>
+      <y>280</y>
       <width>101</width>
       <height>21</height>
      </rect>
@@ -66,23 +66,26 @@
      <enum>QFrame::StyledPanel</enum>
     </property>
     <property name="text">
-     <string>메시지 체인</string>
+     <string>체인접속자</string>
     </property>
     <property name="alignment">
      <set>Qt::AlignCenter</set>
     </property>
    </widget>
-   <widget class="QLineEdit" name="lineEdit">
+   <widget class="QLineEdit" name="chainusers">
     <property name="geometry">
      <rect>
       <x>120</x>
-      <y>250</y>
+      <y>280</y>
       <width>271</width>
       <height>21</height>
      </rect>
     </property>
     <property name="readOnly">
      <bool>true</bool>
+    </property>
+    <property name="placeholderText">
+     <string>아직 아무도 접속하지 않음</string>
     </property>
    </widget>
    <widget class="QListWidget" name="log">
@@ -118,11 +121,45 @@
      </rect>
     </property>
    </widget>
-  </widget>
-  <widget class="QStatusBar" name="statusBar">
-   <property name="sizeGripEnabled">
-    <bool>false</bool>
-   </property>
+   <widget class="QLineEdit" name="address">
+    <property name="geometry">
+     <rect>
+      <x>10</x>
+      <y>250</y>
+      <width>171</width>
+      <height>20</height>
+     </rect>
+    </property>
+    <property name="placeholderText">
+     <string>여기에 주소를 넣으세요</string>
+    </property>
+   </widget>
+   <widget class="QLineEdit" name="nick">
+    <property name="geometry">
+     <rect>
+      <x>190</x>
+      <y>250</y>
+      <width>101</width>
+      <height>20</height>
+     </rect>
+    </property>
+    <property name="placeholderText">
+     <string>닉넴</string>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="connect">
+    <property name="geometry">
+     <rect>
+      <x>300</x>
+      <y>250</y>
+      <width>91</width>
+      <height>23</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>체인접속</string>
+    </property>
+   </widget>
   </widget>
  </widget>
  <layoutdefault spacing="6" margin="11"/>
